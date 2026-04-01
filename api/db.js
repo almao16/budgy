@@ -1,21 +1,22 @@
 import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
-    // Nombre de la "llave" donde guardaremos todo tu JSON
-    const DB_KEY = 'finanzas_betzabeth';
+    // Clave técnica neutra
+    const DB_KEY = 'app_core_storage';
 
     try {
         if (req.method === 'GET') {
             const data = await kv.get(DB_KEY);
-            // Si la base de datos está vacía, devolvemos una estructura inicial
+            // Estructura inicial si la base de datos está nueva
             return res.status(200).json(data || { meses: {}, plantilla: [] });
         }
-
+        
         if (req.method === 'POST') {
             await kv.set(DB_KEY, req.body);
             return res.status(200).json({ success: true });
         }
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
+    } catch (e) {
+        console.error("Error en KV:", e);
+        return res.status(500).json({ error: "Error de comunicación con el almacenamiento" });
     }
 }
