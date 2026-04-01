@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analítica Financiera Pro - Vercel KV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 p-4 md:p-8 font-sans">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center border-b pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">📊 Control Proyectado</h1>
+                <p class="text-slate-500">Planificación inteligente para llegar a fin de mes</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <select id="mesSelector" onchange="cambiarMes()" class="p-2 rounded-lg border bg-white font-bold text-slate-700 shadow-sm">
+                    </select>
+                <button onclick="aplicarPlantilla()" class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-indigo-200">✨ Cargar Plantilla</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-blue-600 p-6 rounded-xl shadow-lg text-center text-white">
+                    <p class="text-xs uppercase font-bold opacity-80">Gasto Semanal Libre</p>
+                    <p id="semanalLibre" class="text-4xl font-black my-1">$0.00</p>
+                    <p class="text-[10px] leading-tight opacity-90">Lo que puedes gastar por semana tras cubrir fijos y ahorros.</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                    <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase">➕ Ingreso</h3>
+                    <input type="text" id="inDesc" placeholder="Sueldo..." class="w-full border p-2 mb-2 rounded-lg text-sm">
+                    <input type="number" id="inMonto" placeholder="Monto $" class="w-full border p-2 mb-2 rounded-lg text-sm">
+                    <button onclick="addMovimiento('ingreso')" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Añadir</button>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-slate-800">
+                    <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase">➖ Gasto / Planificación</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="exDesc" placeholder="Descripción..." class="w-full border p-2 rounded-lg text-sm">
+                        <input type="number" id="exMonto" placeholder="Monto $" class="w-full border p-2 rounded-lg text-sm">
+                        <select id="exTipo" class="w-full border p-2 rounded-lg text-sm bg-slate-50">
+                            <option value="fijo">1. Fijo Mensual</option>
+                            <option value="esencial">2. Esencial Irregular</option>
+                            <option value="variable">3. Deseo / Ocio</option>
+                            <option value="ahorro">4. Ahorro</option>
+                            <option value="deuda">5. Pago de Deuda</option>
+                        </select>
+                        <label class="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200 cursor-pointer">
+                            <input type="checkbox" id="esPendiente" class="w-4 h-4">
+                            <span class="text-xs font-medium text-amber-800">Aún no lo pago (Planificado)</span>
+                        </label>
+                        <button onclick="addMovimiento('egreso')" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold">Registrar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Ingresos</p>
+                        <p id="totalIn" class="text-xl font-bold text-emerald-600">$0.00</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border-b-4 border-amber-400">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Pendiente</p>
+                        <p id="totalPen" class="text-xl font-bold text-amber-500">$0.00</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">Gastado</p>
+                        <p id="totalEx" class="text-xl font-bold text-slate-600">$0.00</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-xl shadow-sm text-center">
+                        <p class="text-[10px] text-slate-300 uppercase font-bold">Saldo Final</p>
+                        <p id="totalNet" class="text-2xl font-bold text-white">$0.00</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm flex items-center justify-center">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                    <div class="md:col-span-2 bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <div class="max-h-[400px] overflow-y-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 sticky top-0 shadow-sm">
+                                    <tr>
+                                        <th class="p-3">Estado</th>
+                                        <th class="p-3">Descripción</th>
+                                        <th class="p-3 text-right">Monto</th>
+                                        <th class="p-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="movementsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let store = { meses: {}, plantilla: [] };
+        let mesActual = new Date().toISOString().slice(0, 7); // Formato YYYY-MM
+        let chart = null;
+
+        // Cargar datos al iniciar
+        async function init() {
+            try {
+                const res = await fetch('/api/db');
+                const data = await res.json();
+                store = data;
+                generarSelectMeses();
+                updateUI();
+            } catch (e) { console.error("Error cargando DB", e); }
+        }
+
+        function generarSelectMeses() {
+            const selector = document.getElementById('mesSelector');
+            const mesesDisponibles = Object.keys(store.meses);
+            if (!mesesDisponibles.includes(mesActual)) mesesDisponibles.push(mesActual);
+            
+            selector.innerHTML = mesesDisponibles.sort().reverse().map(m => 
+                `<option value="${m}" ${m === mesActual ? 'selected' : ''}>${m}</option>`
+            ).join('');
+        }
+
+        function cambiarMes() {
+            mesActual = document.getElementById('mesSelector').value;
+            updateUI();
+        }
+
+        async function updateUI() {
+            const movimientos = store.meses[mesActual] || [];
+            
+            const sumIn = movimientos.filter(m => m.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0);
+            const pagados = movimientos.filter(m => m.tipo !== 'ingreso' && m.estado === 'pagado').reduce((a, b) => a + b.monto, 0);
+            const pendientes = movimientos.filter(m => m.tipo !== 'ingreso' && m.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
+            const balanceNeto = sumIn - pagados - pendientes;
+
+            // LÓGICA DE PRESUPUESTO SEMANAL
+            // Restamos fijos, deudas y ahorros del ingreso total para ver qué queda "libre"
+            const fijosAhorroDeuda = movimientos
+                .filter(m => ['fijo', 'ahorro', 'deuda'].includes(m.tipo))
+                .reduce((a, b) => a + b.monto, 0);
+            
+            const libreParaElMes = sumIn - fijosAhorroDeuda;
+            const semanal = libreParaElMes > 0 ? (libreParaElMes / 4) : 0;
+
+            document.getElementById('totalIn').innerText = `$${sumIn.toFixed(2)}`;
+            document.getElementById('totalEx').innerText = `$${pagados.toFixed(2)}`;
+            document.getElementById('totalPen').innerText = `$${pendientes.toFixed(2)}`;
+            document.getElementById('totalNet').innerText = `$${balanceNeto.toFixed(2)}`;
+            document.getElementById('semanalLibre').innerText = `$${semanal.toFixed(2)}`;
+
+            renderTable(movimientos);
+            renderChart(movimientos);
+
+            // Guardar en Vercel KV
+            await fetch('/api/db', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(store)
+            });
+        }
+
+        function addMovimiento(mode) {
+            const desc = document.getElementById(mode === 'ingreso' ? 'inDesc' : 'exDesc').value;
+            const monto = parseFloat(document.getElementById(mode === 'ingreso' ? 'inMonto' : 'exMonto').value);
+            const tipo = mode === 'egreso' ? document.getElementById('exTipo').value : 'ingreso';
+            const esPendiente = mode === 'egreso' ? document.getElementById('esPendiente').checked : false;
+
+            if (!desc || isNaN(monto)) return;
+
+            if (!store.meses[mesActual]) store.meses[mesActual] = [];
+            
+            store.meses[mesActual].push({
+                id: Date.now(),
+                desc, monto, tipo,
+                estado: esPendiente ? 'pendiente' : 'pagado'
+            });
+
+            // Limpiar y actualizar
+            document.getElementById('inDesc').value = ''; document.getElementById('inMonto').value = '';
+            document.getElementById('exDesc').value = ''; document.getElementById('exMonto').value = '';
+            updateUI();
+        }
+
+        function aplicarPlantilla() {
+            const plantillaEjemplo = [
+                { desc: "Sueldo Cykadas", monto: 1000, tipo: "ingreso" },
+                { desc: "Internet", monto: 30, tipo: "fijo" },
+                { desc: "Cuota Laptop", monto: 50, tipo: "deuda" },
+                { desc: "Bolso Efectivo", monto: 250, tipo: "ahorro" }
+            ];
+
+            if (!store.meses[mesActual]) store.meses[mesActual] = [];
+            
+            plantillaEjemplo.forEach(item => {
+                store.meses[mesActual].push({
+                    ...item,
+                    id: Date.now() + Math.random(),
+                    estado: 'pendiente'
+                });
+            });
+            updateUI();
+        }
+
+        function toggleEstado(id) {
+            const mov = store.meses[mesActual].find(m => m.id === id);
+            if (mov) {
+                mov.estado = mov.estado === 'pagado' ? 'pendiente' : 'pagado';
+                updateUI();
+            }
+        }
+
+        function deleteItem(id) {
+            store.meses[mesActual] = store.meses[mesActual].filter(m => m.id !== id);
+            updateUI();
+        }
+
+        function renderTable(list) {
+            const table = document.getElementById('movementsTable');
+            table.innerHTML = list.slice().reverse().map(m => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-3">
+                        <button onclick="toggleEstado(${m.id})" class="${m.estado === 'pagado' ? 'text-emerald-500' : 'text-amber-500'}">
+                            ${m.estado === 'pagado' ? '✔️' : '🕒'}
+                        </button>
+                    </td>
+                    <td class="p-3 ${m.estado === 'pagado' && m.tipo !== 'ingreso' ? 'line-through text-slate-400' : ''}">
+                        ${m.desc} <br> <span class="text-[9px] uppercase font-bold opacity-50">${m.tipo}</span>
+                    </td>
+                    <td class="p-3 text-right font-mono font-bold">$${m.monto.toFixed(2)}</td>
+                    <td class="p-3 text-center text-slate-300 hover:text-red-500 cursor-pointer" onclick="deleteItem(${m.id})">🗑️</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderChart(list) {
+            const data = {
+                fijo: list.filter(m => m.tipo === 'fijo').reduce((a,b)=>a+b.monto,0),
+                esen: list.filter(m => m.tipo === 'esencial').reduce((a,b)=>a+b.monto,0),
+                var: list.filter(m => m.tipo === 'variable').reduce((a,b)=>a+b.monto,0),
+                save: list.filter(m => m.tipo === 'ahorro').reduce((a,b)=>a+b.monto,0),
+                deuda: list.filter(m => m.tipo === 'deuda').reduce((a,b)=>a+b.monto,0)
+            };
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fijo', 'Esencial', 'Variable', 'Ahorro', 'Deuda'],
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#64748b', '#a855f7', '#f59e0b', '#3b82f6', '#ef4444']
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, cutout: '70%' }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
