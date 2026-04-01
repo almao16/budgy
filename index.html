@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budgy</title>
+    <title>Budgy - Control Proyectado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -12,11 +12,12 @@
         <header class="mb-8 flex flex-col md:flex-row justify-between items-center border-b pb-4 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-800">📊 Budgy</h1>
-                <!-- <p class="text-slate-500">Planificación inteligente para llegar a fin de mes</p> -->
+                <p class="text-slate-500 text-sm">Sincronizado con la nube</p>
             </div>
             <div class="flex items-center gap-3">
                 <select id="mesSelector" onchange="cambiarMes()" class="p-2 rounded-lg border bg-white font-bold text-slate-700 shadow-sm outline-none"></select>
                 <button onclick="aplicarPlantilla()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-indigo-700 transition">✨ Cargar Plantilla</button>
+                <button onclick="limpiarTodo()" class="text-xs text-red-500 hover:underline">Reiniciar</button>
             </div>
         </header>
 
@@ -25,7 +26,7 @@
                 <div class="bg-blue-600 p-6 rounded-2xl shadow-xl text-center text-white">
                     <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Gasto Semanal Libre</p>
                     <p id="semanalLibre" class="text-5xl font-black my-2">$0.00</p>
-                    <p class="text-[11px] leading-tight opacity-90">Lo que puedes gastar por semana tras cubrir fijos y ahorros.</p>
+                    <p class="text-[11px] leading-tight opacity-90">Dinero disponible por semana tras gastos fijos y ahorros.</p>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500">
@@ -49,7 +50,7 @@
                         </select>
                         <div class="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
                             <input type="checkbox" id="esPendiente" class="w-4 h-4" checked>
-                            <label class="text-xs font-medium text-amber-800">Aún no lo pago (Planificado)</label>
+                            <label class="text-xs font-medium text-amber-800 cursor-pointer">Aún no lo pago (Planificado)</label>
                         </div>
                         <button onclick="addMovimiento('egreso')" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold hover:bg-slate-900">Registrar</button>
                     </div>
@@ -94,51 +95,76 @@
     </div>
 
     <script>
-        let store = { meses: {}, plantilla: [] };
+        // Estructura robusta para evitar errores de Object.keys
+        let store = { 
+            meses: {}, 
+            plantilla: [
+                { desc: "Sueldo Cykadas", monto: 1000, tipo: "ingreso" },
+                { desc: "Carnes", monto: 70, tipo: "fijo" },
+                { desc: "Víveres", monto: 70, tipo: "fijo" },
+                { desc: "Internet", monto: 30, tipo: "fijo" },
+                { desc: "Bolso Efectivo", monto: 250, tipo: "ahorro" },
+                { desc: "Bolso Euro", monto: 85, tipo: "ahorro" },
+                { desc: "Cuota laptop", monto: 50, tipo: "deuda" }
+            ]
+        };
+        
         let mesActual = new Date().toISOString().slice(0, 7);
 
         async function init() {
             try {
                 const res = await fetch('/api/db');
-                if (!res.ok) throw new Error();
+                if (!res.ok) throw new Error("Error en servidor");
+                
                 const data = await res.json();
-                if (data && data.meses) store = data;
-
-                // Plantilla por defecto si está vacía
-                if (store.plantilla.length === 0) {
-                    store.plantilla = [
-                        { desc: "Sueldo Cykadas", monto: 1000, tipo: "ingreso" },
-                        { desc: "Carnes", monto: 70, tipo: "fijo" },
-                        { desc: "Víveres", monto: 70, tipo: "fijo" },
-                        { desc: "Internet", monto: 30, tipo: "fijo" },
-                        { desc: "Bolso Efectivo", monto: 250, tipo: "ahorro" },
-                        { desc: "Bolso Euro", monto: 85, tipo: "ahorro" },
-                        { desc: "Cuota laptop", monto: 50, tipo: "deuda" }
-                    ];
+                
+                // Validación para evitar el error de 'undefined' que tenías en consola
+                if (data && data.meses) {
+                    store = data;
+                } else {
+                    console.log("Iniciando con datos locales...");
+                    const local = localStorage.getItem('budgy_backup');
+                    if (local) store = JSON.parse(local);
                 }
+
                 generarSelectMeses();
                 updateUI();
-            } catch (e) { console.error("Error cargando datos:", e); }
+            } catch (e) { 
+                console.error("Modo local activado:", e);
+                generarSelectMeses();
+                updateUI();
+            }
         }
 
         function generarSelectMeses() {
             const selector = document.getElementById('mesSelector');
+            if (!store.meses) store.meses = {};
+            
             const meses = Object.keys(store.meses);
             if (!meses.includes(mesActual)) meses.push(mesActual);
-            selector.innerHTML = meses.sort().reverse().map(m => `<option value="${m}" ${m === mesActual ? 'selected' : ''}>${m}</option>`).join('');
+            
+            selector.innerHTML = meses.sort().reverse().map(m => 
+                `<option value="${m}" ${m === mesActual ? 'selected' : ''}>${m}</option>`
+            ).join('');
         }
 
-        function cambiarMes() { mesActual = document.getElementById('mesSelector').value; updateUI(); }
+        function cambiarMes() { 
+            mesActual = document.getElementById('mesSelector').value; 
+            updateUI(); 
+        }
 
         async function updateUI() {
             if (!store.meses[mesActual]) store.meses[mesActual] = [];
             const list = store.meses[mesActual];
 
+            // Cálculos principales
             const sumIn = list.filter(m => m.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0);
             const egresos = list.filter(m => m.tipo !== 'ingreso' && m.estado === 'pagado').reduce((a, b) => a + b.monto, 0);
             const pendientes = list.filter(m => m.tipo !== 'ingreso' && m.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
             
             const balanceNeto = sumIn - egresos - pendientes;
+
+            // Cálculo semanal (Ingresos - Gastos Fijos/Ahorros/Deudas) / 4
             const comprometido = list.filter(m => ['fijo', 'ahorro', 'deuda'].includes(m.tipo)).reduce((a, b) => a + b.monto, 0);
             const semanal = (sumIn - comprometido) > 0 ? ((sumIn - comprometido) / 4) : 0;
 
@@ -150,29 +176,47 @@
 
             renderTable(list);
 
-            await fetch('/api/db', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(store)
-            });
+            // Guardado automático en la nube y local
+            localStorage.setItem('budgy_backup', JSON.stringify(store));
+            
+            try {
+                await fetch('/api/db', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(store)
+                });
+            } catch (e) {
+                console.warn("No se pudo sincronizar con la nube.");
+            }
         }
 
         function addMovimiento(mode) {
             const desc = document.getElementById(mode === 'ingreso' ? 'inDesc' : 'exDesc').value;
             const monto = parseFloat(document.getElementById(mode === 'ingreso' ? 'inMonto' : 'exMonto').value);
-            if (!desc || isNaN(monto)) return;
+            if (!desc || isNaN(monto)) return alert("Completa los datos");
 
             store.meses[mesActual].push({
-                id: Date.now(), desc, monto,
+                id: Date.now(),
+                desc,
+                monto,
                 tipo: mode === 'egreso' ? document.getElementById('exTipo').value : 'ingreso',
                 estado: mode === 'egreso' && document.getElementById('esPendiente').checked ? 'pendiente' : 'pagado'
             });
+            
+            // Limpiar inputs
+            document.getElementById(mode === 'ingreso' ? 'inDesc' : 'exDesc').value = '';
+            document.getElementById(mode === 'ingreso' ? 'inMonto' : 'exMonto').value = '';
             updateUI();
         }
 
         function aplicarPlantilla() {
+            if (!store.meses[mesActual]) store.meses[mesActual] = [];
             store.plantilla.forEach(item => {
-                store.meses[mesActual].push({ ...item, id: Date.now() + Math.random(), estado: item.tipo === 'ingreso' ? 'pagado' : 'pendiente' });
+                store.meses[mesActual].push({ 
+                    ...item, 
+                    id: Date.now() + Math.random(), 
+                    estado: item.tipo === 'ingreso' ? 'pagado' : 'pendiente' 
+                });
             });
             updateUI();
         }
@@ -180,18 +224,43 @@
         function renderTable(list) {
             const table = document.getElementById('movementsTable');
             table.innerHTML = list.slice().reverse().map(m => `
-                <tr class="border-b">
-                    <td class="p-3">${m.estado === 'pagado' ? '✔️' : '🕒'}</td>
-                    <td class="p-3">${m.desc}</td>
-                    <td class="p-3 text-right font-bold">$${m.monto.toFixed(2)}</td>
-                    <td class="p-3 text-center cursor-pointer" onclick="deleteItem(${m.id})">🗑️</td>
+                <tr class="border-b hover:bg-slate-50 transition">
+                    <td class="p-3 cursor-pointer" onclick="toggleEstado(${m.id})">
+                        ${m.estado === 'pagado' ? '<span class="text-emerald-500">✔️</span>' : '<span class="text-amber-500">🕒</span>'}
+                    </td>
+                    <td class="p-3 ${m.estado === 'pagado' && m.tipo !== 'ingreso' ? 'line-through text-slate-400' : 'text-slate-700'}">
+                        ${m.desc}
+                    </td>
+                    <td class="p-3 text-right font-bold ${m.tipo === 'ingreso' ? 'text-emerald-600' : 'text-slate-700'}">
+                        $${m.monto.toFixed(2)}
+                    </td>
+                    <td class="p-3 text-center cursor-pointer text-slate-300 hover:text-red-500" onclick="deleteItem(${m.id})">
+                        🗑️
+                    </td>
                 </tr>
             `).join('');
         }
 
+        function toggleEstado(id) {
+            const item = store.meses[mesActual].find(m => m.id === id);
+            if (item && item.tipo !== 'ingreso') {
+                item.estado = item.estado === 'pagado' ? 'pendiente' : 'pagado';
+                updateUI();
+            }
+        }
+
         function deleteItem(id) {
-            store.meses[mesActual] = store.meses[mesActual].filter(m => m.id !== id);
-            updateUI();
+            if (confirm("¿Eliminar registro?")) {
+                store.meses[mesActual] = store.meses[mesActual].filter(m => m.id !== id);
+                updateUI();
+            }
+        }
+
+        function limpiarTodo() {
+            if (confirm("¿Borrar todos los datos del mes?")) {
+                store.meses[mesActual] = [];
+                updateUI();
+            }
         }
 
         init();
