@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Gastos Proyectado</title>
+    <title>Control Proyectado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -11,49 +11,46 @@
     <div class="max-w-6xl mx-auto">
         <header class="mb-8 flex flex-col md:flex-row justify-between items-center border-b pb-4 gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-slate-800">📊 Panel Financiero</h1>
-                <p class="text-slate-500 font-medium">Gestión de flujos y ahorro proyectado</p>
+                <h1 class="text-3xl font-bold text-slate-800">📊 Control Proyectado</h1>
+                <p class="text-slate-500">Planificación inteligente para llegar a fin de mes</p>
             </div>
-            
             <div class="flex items-center gap-3">
-                <select id="mesSelector" onchange="cambiarMes()" class="p-2 rounded-lg border bg-white font-bold text-slate-700 shadow-sm outline-none">
-                    </select>
+                <select id="mesSelector" onchange="cambiarMes()" class="p-2 rounded-lg border bg-white font-bold text-slate-700 shadow-sm outline-none"></select>
                 <button onclick="aplicarPlantilla()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-indigo-700 transition">✨ Cargar Plantilla</button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-4 space-y-6">
-                
-                <div class="bg-gradient-to-br from-indigo-600 to-blue-700 p-6 rounded-2xl shadow-xl text-center text-white">
-                    <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Presupuesto Semanal Libre</p>
+                <div class="bg-blue-600 p-6 rounded-2xl shadow-xl text-center text-white">
+                    <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Gasto Semanal Libre</p>
                     <p id="semanalLibre" class="text-5xl font-black my-2">$0.00</p>
-                    <p class="text-[11px] leading-tight opacity-90 px-4">Gasto máximo recomendado por semana para no agotar el saldo antes del próximo cobro.</p>
+                    <p class="text-[11px] leading-tight opacity-90">Lo que puedes gastar por semana tras cubrir fijos y ahorros.</p>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-emerald-500">
                     <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase">➕ Ingreso</h3>
-                    <input type="text" id="inDesc" placeholder="Fuente de ingreso..." class="w-full border p-2 mb-2 rounded-lg text-sm">
-                    <input type="number" id="inMonto" placeholder="Monto $" class="w-full border p-2 mb-2 rounded-lg text-sm">
+                    <input type="text" id="inDesc" placeholder="Sueldo..." class="w-full border p-2 mb-2 rounded-lg text-sm outline-none">
+                    <input type="number" id="inMonto" placeholder="Monto $" class="w-full border p-2 mb-2 rounded-lg text-sm outline-none">
                     <button onclick="addMovimiento('ingreso')" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold hover:bg-emerald-700">Añadir</button>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-slate-800">
                     <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase">➖ Gasto / Planificación</h3>
                     <div class="space-y-3">
-                        <input type="text" id="exDesc" placeholder="Descripción..." class="w-full border p-2 rounded-lg text-sm">
-                        <input type="number" id="exMonto" placeholder="Monto $" class="w-full border p-2 rounded-lg text-sm">
-                        <select id="exTipo" class="w-full border p-2 rounded-lg text-sm bg-slate-50">
+                        <input type="text" id="exDesc" placeholder="Descripción..." class="w-full border p-2 rounded-lg text-sm outline-none">
+                        <input type="number" id="exMonto" placeholder="Monto $" class="w-full border p-2 rounded-lg text-sm outline-none">
+                        <select id="exTipo" class="w-full border p-2 rounded-lg text-sm bg-slate-50 outline-none">
                             <option value="fijo">1. Fijo Mensual</option>
                             <option value="esencial">2. Esencial Irregular</option>
                             <option value="variable">3. Deseo / Ocio</option>
-                            <option value="ahorro">4. Ahorro</option>
+                            <option value="ahorro">4. Ahorro (Bolsos)</option>
                             <option value="deuda">5. Pago de Deuda</option>
                         </select>
-                        <label class="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200 cursor-pointer">
+                        <div class="flex items-center gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
                             <input type="checkbox" id="esPendiente" class="w-4 h-4" checked>
-                            <span class="text-xs font-medium text-amber-800">Aún no lo pago (Planificado)</span>
-                        </label>
+                            <label class="text-xs font-medium text-amber-800">Aún no lo pago (Planificado)</label>
+                        </div>
                         <button onclick="addMovimiento('egreso')" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold hover:bg-slate-900">Registrar</button>
                     </div>
                 </div>
@@ -75,29 +72,22 @@
                     </div>
                     <div id="saldoCard" class="bg-slate-800 p-4 rounded-xl shadow-sm text-center">
                         <p class="text-[10px] text-slate-300 uppercase font-bold">Saldo Final</p>
-                        <p id="totalNet" class="text-2xl font-bold text-white">$0.00</p>
+                        <p id="totalNet" class="text-xl font-bold text-white">$0.00</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm flex items-center justify-center min-h-[200px]">
-                        <canvas id="mainChart"></canvas>
-                    </div>
-                    <div class="md:col-span-2 bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <div class="max-h-[400px] overflow-y-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-slate-50 sticky top-0 shadow-sm z-10">
-                                    <tr>
-                                        <th class="p-3 text-slate-400 font-medium text-center">Estado</th>
-                                        <th class="p-3 text-slate-400 font-medium">Descripción</th>
-                                        <th class="p-3 text-right text-slate-400 font-medium">Monto</th>
-                                        <th class="p-3"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="movementsTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="p-3 text-slate-400 font-medium">Estado</th>
+                                <th class="p-3 text-slate-400 font-medium">Descripción</th>
+                                <th class="p-3 text-right text-slate-400 font-medium">Monto</th>
+                                <th class="p-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="movementsTable"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -105,79 +95,61 @@
 
     <script>
         let store = { meses: {}, plantilla: [] };
-        let mesActual = new Date().toISOString().slice(0, 7); 
-        let chart = null;
+        let mesActual = new Date().toISOString().slice(0, 7);
 
-        // Carga inicial desde la API
         async function init() {
             try {
                 const res = await fetch('/api/db');
-                store = await res.json();
-                
-                // Plantilla sugerida basada en tus necesidades previas
-                if (!store.plantilla || store.plantilla.length === 0) {
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                if (data && data.meses) store = data;
+
+                // Plantilla por defecto si está vacía
+                if (store.plantilla.length === 0) {
                     store.plantilla = [
-                        { desc: "Sueldo", monto: 1000, tipo: "ingreso" },
+                        { desc: "Sueldo Cykadas", monto: 1000, tipo: "ingreso" },
                         { desc: "Carnes", monto: 70, tipo: "fijo" },
                         { desc: "Víveres", monto: 70, tipo: "fijo" },
                         { desc: "Internet", monto: 30, tipo: "fijo" },
-                        { desc: "Ahorro Efectivo", monto: 250, tipo: "ahorro" },
-                        { desc: "Ahorro Divisas", monto: 85, tipo: "ahorro" },
-                        { desc: "Cuota Laptop", monto: 50, tipo: "deuda" }
+                        { desc: "Bolso Efectivo", monto: 250, tipo: "ahorro" },
+                        { desc: "Bolso Euro", monto: 85, tipo: "ahorro" },
+                        { desc: "Cuota laptop", monto: 50, tipo: "deuda" }
                     ];
                 }
-
                 generarSelectMeses();
                 updateUI();
-            } catch (e) { console.error("Error al sincronizar con la nube", e); }
+            } catch (e) { console.error("Error cargando datos:", e); }
         }
 
         function generarSelectMeses() {
             const selector = document.getElementById('mesSelector');
             const meses = Object.keys(store.meses);
             if (!meses.includes(mesActual)) meses.push(mesActual);
-            
-            selector.innerHTML = meses.sort().reverse().map(m => 
-                `<option value="${m}" ${m === mesActual ? 'selected' : ''}>${m.replace('-', ' / ')}</option>`
-            ).join('');
+            selector.innerHTML = meses.sort().reverse().map(m => `<option value="${m}" ${m === mesActual ? 'selected' : ''}>${m}</option>`).join('');
         }
 
-        function cambiarMes() {
-            mesActual = document.getElementById('mesSelector').value;
-            updateUI();
-        }
+        function cambiarMes() { mesActual = document.getElementById('mesSelector').value; updateUI(); }
 
         async function updateUI() {
             if (!store.meses[mesActual]) store.meses[mesActual] = [];
             const list = store.meses[mesActual];
-            
-            const sumIn = list.filter(m => m.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0);
-            const pagados = list.filter(m => m.tipo !== 'ingreso' && m.estado === 'pagado').reduce((a, b) => a + b.monto, 0);
-            const pendientes = list.filter(m => m.tipo !== 'ingreso' && m.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
-            const balanceNeto = sumIn - pagados - pendientes;
 
-            // LÓGICA DE PRESUPUESTO SEMANAL LIBRE
-            // Restamos los compromisos ineludibles (Fijos, Ahorros, Deudas) del ingreso total
-            const comprometido = list
-                .filter(m => ['fijo', 'ahorro', 'deuda'].includes(m.tipo))
-                .reduce((a, b) => a + b.monto, 0);
+            const sumIn = list.filter(m => m.tipo === 'ingreso').reduce((a, b) => a + b.monto, 0);
+            const egresos = list.filter(m => m.tipo !== 'ingreso' && m.estado === 'pagado').reduce((a, b) => a + b.monto, 0);
+            const pendientes = list.filter(m => m.tipo !== 'ingreso' && m.estado === 'pendiente').reduce((a, b) => a + b.monto, 0);
             
-            const disponibleParaElMes = sumIn - comprometido;
-            const semanal = disponibleParaElMes > 0 ? (disponibleParaElMes / 4) : 0;
+            const balanceNeto = sumIn - egresos - pendientes;
+            const comprometido = list.filter(m => ['fijo', 'ahorro', 'deuda'].includes(m.tipo)).reduce((a, b) => a + b.monto, 0);
+            const semanal = (sumIn - comprometido) > 0 ? ((sumIn - comprometido) / 4) : 0;
 
             document.getElementById('totalIn').innerText = `$${sumIn.toFixed(2)}`;
-            document.getElementById('totalEx').innerText = `$${pagados.toFixed(2)}`;
+            document.getElementById('totalEx').innerText = `$${egresos.toFixed(2)}`;
             document.getElementById('totalPen').innerText = `$${pendientes.toFixed(2)}`;
             document.getElementById('totalNet').innerText = `$${balanceNeto.toFixed(2)}`;
             document.getElementById('semanalLibre').innerText = `$${semanal.toFixed(2)}`;
 
-            const card = document.getElementById('saldoCard');
-            card.className = balanceNeto < 0 ? "bg-red-600 p-4 rounded-xl shadow-sm text-center" : "bg-slate-800 p-4 rounded-xl shadow-sm text-center";
-
             renderTable(list);
-            renderChart(list);
 
-            // Guardar cambios en Vercel KV
             await fetch('/api/db', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -188,87 +160,38 @@
         function addMovimiento(mode) {
             const desc = document.getElementById(mode === 'ingreso' ? 'inDesc' : 'exDesc').value;
             const monto = parseFloat(document.getElementById(mode === 'ingreso' ? 'inMonto' : 'exMonto').value);
-            const tipo = mode === 'egreso' ? document.getElementById('exTipo').value : 'ingreso';
-            const esPendiente = mode === 'egreso' ? document.getElementById('esPendiente').checked : false;
-
             if (!desc || isNaN(monto)) return;
 
             store.meses[mesActual].push({
-                id: Date.now(), desc, monto, tipo,
-                estado: esPendiente ? 'pendiente' : 'pagado'
+                id: Date.now(), desc, monto,
+                tipo: mode === 'egreso' ? document.getElementById('exTipo').value : 'ingreso',
+                estado: mode === 'egreso' && document.getElementById('esPendiente').checked ? 'pendiente' : 'pagado'
             });
-
-            document.getElementById('inDesc').value = ''; document.getElementById('inMonto').value = '';
-            document.getElementById('exDesc').value = ''; document.getElementById('exMonto').value = '';
             updateUI();
         }
 
         function aplicarPlantilla() {
-            if (store.meses[mesActual].length > 0 && !confirm("¿Añadir gastos de la plantilla a la lista actual?")) return;
-            
             store.plantilla.forEach(item => {
-                store.meses[mesActual].push({
-                    ...item,
-                    id: Date.now() + Math.random(),
-                    estado: item.tipo === 'ingreso' ? 'pagado' : 'pendiente'
-                });
+                store.meses[mesActual].push({ ...item, id: Date.now() + Math.random(), estado: item.tipo === 'ingreso' ? 'pagado' : 'pendiente' });
             });
-            updateUI();
-        }
-
-        function toggleEstado(id) {
-            const mov = store.meses[mesActual].find(m => m.id === id);
-            if (mov) {
-                mov.estado = mov.estado === 'pagado' ? 'pendiente' : 'pagado';
-                updateUI();
-            }
-        }
-
-        function deleteItem(id) {
-            store.meses[mesActual] = store.meses[mesActual].filter(m => m.id !== id);
             updateUI();
         }
 
         function renderTable(list) {
             const table = document.getElementById('movementsTable');
             table.innerHTML = list.slice().reverse().map(m => `
-                <tr class="border-b hover:bg-slate-50 transition">
-                    <td class="p-3 text-center">
-                        <button onclick="toggleEstado(${m.id})" class="text-lg">
-                            ${m.estado === 'pagado' ? '✔️' : '🕒'}
-                        </button>
-                    </td>
-                    <td class="p-3">
-                        <div class="font-medium ${m.estado === 'pagado' && m.tipo !== 'ingreso' ? 'line-through text-slate-400' : 'text-slate-700'}">${m.desc}</div>
-                        <div class="text-[9px] uppercase font-bold text-slate-400">${m.tipo}</div>
-                    </td>
-                    <td class="p-3 text-right font-mono font-bold ${m.tipo === 'ingreso' ? 'text-emerald-600' : 'text-slate-600'}">$${m.monto.toFixed(2)}</td>
-                    <td class="p-3 text-center cursor-pointer opacity-30 hover:opacity-100" onclick="deleteItem(${m.id})">🗑️</td>
+                <tr class="border-b">
+                    <td class="p-3">${m.estado === 'pagado' ? '✔️' : '🕒'}</td>
+                    <td class="p-3">${m.desc}</td>
+                    <td class="p-3 text-right font-bold">$${m.monto.toFixed(2)}</td>
+                    <td class="p-3 text-center cursor-pointer" onclick="deleteItem(${m.id})">🗑️</td>
                 </tr>
             `).join('');
         }
 
-        function renderChart(list) {
-            const totals = {
-                fijo: list.filter(m => m.tipo === 'fijo').reduce((a,b)=>a+b.monto,0),
-                esen: list.filter(m => m.tipo === 'esencial').reduce((a,b)=>a+b.monto,0),
-                var: list.filter(m => m.tipo === 'variable').reduce((a,b)=>a+b.monto,0),
-                save: list.filter(m => m.tipo === 'ahorro').reduce((a,b)=>a+b.monto,0),
-                deu: list.filter(m => m.tipo === 'deuda').reduce((a,b)=>a+b.monto,0)
-            };
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Fijo', 'Esencial', 'Variable', 'Ahorro', 'Deuda'],
-                    datasets: [{
-                        data: Object.values(totals),
-                        backgroundColor: ['#64748b', '#a855f7', '#f59e0b', '#3b82f6', '#ef4444']
-                    }]
-                },
-                options: { plugins: { legend: { display: false } }, cutout: '75%' }
-            });
+        function deleteItem(id) {
+            store.meses[mesActual] = store.meses[mesActual].filter(m => m.id !== id);
+            updateUI();
         }
 
         init();
