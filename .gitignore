@@ -1,41 +1,41 @@
-.DS_Store
-__pycache__
-.vscode
-venv
-*.pyc
-db.sqlite3
-enviroment.env
-credential-helper.sh
-build.sh
-enviroment.local.env
-.DS_Store
-node_modules
-/dist
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# local env files
-.env.local
-.env.*.local
-.env
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Log files
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# Editor directories and files
-.idea
-.vscode/*
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# env files (can opt-in for committing if needed)
+.env*
 
-!.vscode/*.code-snippets
+# vercel
+.vercel
 
-# script
-/vuexy-scripts
-
-# Docs
-/docs/.temp
-.qodo
+# typescript
+*.tsbuildinfo
+next-env.d.ts
