@@ -47,7 +47,8 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     session({ session, token }) {
       if (session.user && token.sub) {
-        session.user.id = token.sub;
+        // Le agregamos "as any" para que TypeScript no se queje del .id
+        (session.user as any).id = token.sub;
       }
       return session;
     },
