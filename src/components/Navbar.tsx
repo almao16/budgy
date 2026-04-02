@@ -11,11 +11,16 @@ export default function Navbar() {
   const pathname = usePathname();
   const [perfil, setPerfil] = useState<any>(null);
 
-  useEffect(() => {
-    if (session) {
-      fetch('/api/perfil').then(res => res.json()).then(data => setPerfil(data));
-    }
-  }, [session]);
+  // Busca esta parte en tu Navbar.tsx y cámbiala:
+useEffect(() => {
+  if (session) {
+    // CAMBIAR: de '/api/perfil' a '/api/profile'
+    fetch('/api/profile') 
+      .then(res => res.json())
+      .then(data => setPerfil(data))
+      .catch(err => console.error("Error cargando perfil:", err));
+  }
+}, [session]);
 
   if (!session) return null;
 

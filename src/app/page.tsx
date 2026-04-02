@@ -1,180 +1,233 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Wallet, 
+  Calendar, 
+  ArrowUpCircle, 
+  ArrowDownCircle,
+  AlertCircle
+} from "lucide-react";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell 
+} from "recharts";
 
-export default function Home() {
+export default function Dashboard() {
   const { data: session, status } = useSession();
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [store, setStore] = useState<any>({ meses: {} });
+  const [loading, setLoading] = useState(true);
+  const [mesSeleccionado, setMesSeleccionado] = useState("");
 
-  const [store, setStore] = useState<any>({ meses: {}, plantilla: [] });
-  const [mesActual, setMesActual] = useState(new Date().toISOString().slice(0, 7));
-
+  // 1. Cargar datos desde la API
   useEffect(() => {
     if (session) {
-      fetch('/api/db').then(res => res.json()).then(data => {
-        if (data.meses) setStore(data);
-      });
+      fetch('/api/db')
+        .then(res => res.json())
+        .then(data => {
+          setStore(data);
+          const mesesDisponibles = Object.keys(data.meses || {});
+          if (mesesDisponibles.length > 0) {
+            // Seleccionar el mes actual o el más reciente
+            const hoy = new Date().toISOString().substring(0, 7);
+            setMesSeleccionado(mesesDisponibles.includes(hoy) ? hoy : mesesDisponibles.sort().reverse()[0]);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
     }
   }, [session]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true); setError("");
-    const res = await signIn("credentials", { email, password, redirect: false });
-    if (res?.error) { setError(res.error); setLoading(false); }
-  };
-
-  if (status === "loading") return <div className="min-h-screen flex items-center justify-center bg-slate-100"><p className="text-slate-500 font-bold animate-pulse">Cargando Budgy...</p></div>;
-
-  // --- PANTALLA DE LOGIN ---
-  if (!session) {
+  if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 font-sans">
-        <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full border-t-4 border-indigo-600">
-          <h1 className="text-4xl font-black text-slate-800 mb-2">📊 Budgy</h1>
-          <p className="text-slate-500 text-sm mb-6">Inicia sesión o regístrate con tu correo</p>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input type="email" placeholder="tu@correo.com" required className="w-full border p-3 rounded-xl text-sm outline-none text-slate-900 bg-white placeholder-slate-400 focus:border-indigo-500" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input type="password" placeholder="Contraseña" required className="w-full border p-3 rounded-xl text-sm outline-none text-slate-900 bg-white placeholder-slate-400 focus:border-indigo-500" value={password} onChange={(e) => setPassword(e.target.value)} />
-            {error && <p className="text-red-500 text-xs font-bold">{error}</p>}
-            <button type="submit" disabled={loading} className="w-full bg-slate-800 text-white p-3 rounded-xl text-sm font-bold shadow-md hover:bg-slate-900">{loading ? "Verificando..." : "Entrar / Registrarse"}</button>
-          </form>
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500 font-medium italic">Cargando tu resumen financiero...</p>
         </div>
       </div>
     );
   }
 
-  // --- PREPARACIÓN DE DATOS PARA EL DASHBOARD ---
-  const list = store.meses[mesActual] || [];
+  // 2. Lógica de Cálculos
+  const movimientos = store.meses[mesSeleccionado] || [];
   
-  // Sumas de columnas
-  let sumIn = 0;
-  let egresos = 0;
-  let pendientes = 0;
-  let comprometido = 0;
-
-  // Categorías para la gráfica de torta
-  let gastosPorTipo = { fijo: 0, esencial: 0, variable: 0, ahorro: 0, deuda: 0 };
-
-  list.forEach((m: any) => {
-    if (m.tipo === 'ingreso') {
-        sumIn += m.monto;
+  const totales = movimientos.reduce((acc: any, mov: any) => {
+    if (mov.tipo === 'ingreso') {
+      acc.ingresos += mov.monto;
     } else {
-        if (m.estado === 'pagado') egresos += m.monto;
-        if (m.estado === 'pendiente') pendientes += m.monto;
-        if (['fijo', 'ahorro', 'deuda'].includes(m.tipo)) comprometido += m.monto;
-        
-        // Sumamos a la categoría correspondiente
-        if (gastosPorTipo[m.tipo as keyof typeof gastosPorTipo] !== undefined) {
-             gastosPorTipo[m.tipo as keyof typeof gastosPorTipo] += m.monto;
-        }
+      acc.egresos += (mov.estado === 'pagado' ? mov.monto : 0);
+      acc.pendientes += (mov.estado === 'pendiente' ? mov.monto : 0);
     }
-  });
+    return acc;
+  }, { ingresos: 0, egresos: 0, pendientes: 0 });
 
-  const balanceNeto = sumIn - egresos - pendientes;
-  const semanal = (sumIn - comprometido) > 0 ? ((sumIn - comprometido) / 4) : 0;
+  const saldoFinal = totales.ingresos - totales.egresos;
+  const saldoReal = saldoFinal - totales.pendientes;
+  
+  // Cálculo de gasto semanal libre (basado en lo que queda del mes)
+  const hoy = new Date();
+  const ultimoDiaMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+  const diasRestantes = (ultimoDiaMes - hoy.getDate()) || 1;
+  const semanasRestantes = Math.ceil(diasRestantes / 7);
+  const gastoSemanal = saldoReal > 0 ? saldoReal / semanasRestantes : 0;
 
-  // Datos para las gráficas
-  const dataBalance = [
-    { name: 'Ingresos', Monto: sumIn, fill: '#10b981' }, // emerald-500
-    { name: 'Gastado', Monto: egresos, fill: '#475569' }, // slate-600
-    { name: 'Pendiente', Monto: pendientes, fill: '#f59e0b' } // amber-500
+  // Datos para la gráfica
+  const dataGrafica = [
+    { name: 'Ingresos', monto: totales.ingresos, color: '#10b981' },
+    { name: 'Gastado', monto: totales.egresos, color: '#64748b' },
+    { name: 'Pendiente', monto: totales.pendientes, color: '#f59e0b' },
   ];
 
-  const dataCategorias = [
-    { name: 'Fijo Mensual', value: gastosPorTipo.fijo, color: '#3b82f6' },
-    { name: 'Esencial Irreg.', value: gastosPorTipo.esencial, color: '#8b5cf6' },
-    { name: 'Deseo / Ocio', value: gastosPorTipo.variable, color: '#ec4899' },
-    { name: 'Ahorro', value: gastosPorTipo.ahorro, color: '#10b981' },
-    { name: 'Deuda', value: gastosPorTipo.deuda, color: '#ef4444' }
-  ].filter(item => item.value > 0); // Ocultar los que están en cero
-
-  const mesesKeys = Object.keys(store.meses);
-  if (!mesesKeys.includes(mesActual)) mesesKeys.push(mesActual);
-  mesesKeys.sort().reverse();
+  const mesesDisponibles = Object.keys(store.meses).sort().reverse();
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 pb-20 md:pb-8">
+      
+      {/* Selector de Mes y Título */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Resumen Financiero</h1>
+          <p className="text-slate-500 text-sm font-medium">Controla tus gastos y ahorros</p>
+        </div>
         
-        {/* Filtro de Mes */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800">Resumen Financiero</h2>
-            <select value={mesActual} onChange={(e) => setMesActual(e.target.value)} className="p-2 rounded-lg border bg-slate-50 font-bold text-slate-700 outline-none">
-              {mesesKeys.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+        <div className="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+          <Calendar size={18} className="text-indigo-500 ml-2" />
+          <select 
+            value={mesSeleccionado}
+            onChange={(e) => setMesSeleccionado(e.target.value)}
+            className="bg-transparent border-none text-sm font-bold text-slate-700 focus:ring-0 cursor-pointer pr-8"
+          >
+            {mesesDisponibles.length > 0 ? (
+              mesesDisponibles.map(m => <option key={m} value={m}>{m}</option>)
+            ) : (
+              <option>Sin datos</option>
+            )}
+          </select>
+        </div>
+      </div>
+
+      {/* Grid de Tarjetas - OPTIMIZADO PARA MÓVIL */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+        
+        {/* Tarjeta Principal: Gasto Semanal (2 columnas en móvil) */}
+        <div className="col-span-2 bg-indigo-600 p-5 rounded-3xl shadow-xl text-white relative overflow-hidden group">
+          <div className="relative z-10">
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest opacity-70">Gasto Semanal Libre</span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-3xl md:text-5xl font-black">${gastoSemanal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            </div>
+            <p className="text-[10px] md:text-xs mt-4 opacity-90 font-medium flex items-center gap-1">
+              <AlertCircle size={12} /> Basado en {semanasRestantes} semanas restantes
+            </p>
+          </div>
+          {/* Decoración de fondo */}
+          <div className="absolute -right-4 -bottom-4 bg-white/10 w-24 h-24 rounded-full group-hover:scale-110 transition-transform"></div>
         </div>
 
-        {/* Tarjetas Principales */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="md:col-span-2 bg-blue-600 p-6 rounded-xl shadow-md text-center text-white flex flex-col justify-center">
-              <p className="text-[10px] uppercase font-black tracking-widest opacity-80">Gasto Semanal Libre</p>
-              <p className="text-4xl md:text-5xl font-black my-2">${semanal.toFixed(2)}</p>
+        {/* Ingresos */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+              <ArrowUpCircle size={14} />
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm text-center flex flex-col justify-center border-t-4 border-emerald-500">
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Ingresos</p>
-                <p className="text-2xl font-bold text-emerald-600">${sumIn.toFixed(2)}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm text-center flex flex-col justify-center border-t-4 border-amber-400">
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Pendiente</p>
-                <p className="text-2xl font-bold text-amber-500">${pendientes.toFixed(2)}</p>
-            </div>
-             <div className="bg-slate-800 p-4 rounded-xl shadow-sm text-center flex flex-col justify-center">
-                <p className="text-[10px] text-slate-300 uppercase font-bold">Saldo Final</p>
-                <p className="text-2xl font-bold text-white">${balanceNeto.toFixed(2)}</p>
-            </div>
+            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tight">Ingresos</span>
+          </div>
+          <span className="text-lg md:text-2xl font-black text-emerald-600">${totales.ingresos.toLocaleString()}</span>
         </div>
 
-        {/* Sección de Gráficas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Gráfica de Barras: Ingresos vs Gastos */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 className="text-sm font-bold text-slate-700 uppercase mb-6">Balance del Mes</h3>
-                <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dataBalance} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                            <XAxis dataKey="name" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                            <YAxis tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                            <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                            <Bar dataKey="Monto" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+        {/* Pendiente */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+              <AlertCircle size={14} />
+            </div>
+            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tight">Por Pagar</span>
+          </div>
+          <span className="text-lg md:text-2xl font-black text-amber-500">${totales.pendientes.toLocaleString()}</span>
+        </div>
+
+        {/* Saldo Final (Ocupa 2 columnas en móvil para balancear) */}
+        <div className="col-span-2 md:col-span-1 bg-slate-900 p-4 rounded-2xl shadow-md flex flex-col justify-center text-white">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1 opacity-80">Saldo Final</span>
+          <div className="flex items-center justify-between md:flex-col md:items-start">
+            <span className="text-xl md:text-2xl font-black text-indigo-400">${saldoFinal.toLocaleString()}</span>
+            <span className="text-[9px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-bold mt-1">Real: ${saldoReal.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Gráfica y Detalles */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Gráfica de Balance */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-black text-slate-800 flex items-center gap-2 uppercase text-sm tracking-widest">
+              <TrendingUp size={18} className="text-indigo-600" /> Balance del Mes
+            </h3>
+          </div>
+          <div className="h-[250px] md:h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dataGrafica} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 'bold'}} 
+                />
+                <YAxis hide />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
+                />
+                <Bar dataKey="monto" radius={[10, 10, 10, 10]} barSize={50}>
+                  {dataGrafica.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Pequeño Resumen de Movimientos */}
+        <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+          <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest mb-4">Últimos Movimientos</h3>
+          <div className="space-y-3">
+            {movimientos.slice(-5).reverse().map((mov: any, idx: number) => (
+              <div key={idx} className="bg-white p-3 rounded-xl flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    mov.tipo === 'ingreso' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {mov.tipo === 'ingreso' ? <ArrowUpCircle size={16} /> : <ArrowDownCircle size={16} />}
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-700 truncate max-w-[100px]">{mov.descripcion}</p>
+                    <p className="text-[10px] text-slate-400 font-bold">{mov.categoria}</p>
+                  </div>
                 </div>
-            </div>
-
-            {/* Gráfica de Torta: Distribución de Gastos */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 className="text-sm font-bold text-slate-700 uppercase mb-6">Distribución de Gastos (Planificado)</h3>
-                <div className="h-64 w-full">
-                    {dataCategorias.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie data={dataCategorias} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                    {dataCategorias.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                                <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                            No hay gastos registrados este mes
-                        </div>
-                    )}
-                </div>
-            </div>
-
+                <span className={`text-xs font-black ${mov.tipo === 'ingreso' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                  {mov.tipo === 'ingreso' ? '+' : '-'}${mov.monto.toLocaleString()}
+                </span>
+              </div>
+            ))}
+            {movimientos.length === 0 && (
+              <p className="text-center text-slate-400 text-xs py-10 font-bold">Sin movimientos este mes</p>
+            )}
+          </div>
         </div>
-
       </div>
     </div>
   );
