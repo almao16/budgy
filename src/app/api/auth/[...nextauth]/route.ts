@@ -3,11 +3,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { kv } from "@vercel/kv";
 import bcrypt from "bcryptjs";
 
-// Exportamos esta variable para que el backend sepa cómo validar sesiones
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credenciales",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
@@ -19,7 +18,6 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase();
         const userKey = `budgy:user:auth:${email}`;
-        
         const user: any = await kv.get(userKey);
 
         if (!user) {
@@ -30,32 +28,27 @@ export const authOptions: NextAuthOptions = {
             password: hashedPassword,
             name: email.split('@')[0]
           };
-          
           await kv.set(userKey, newUser);
           return { id: newUser.id, email: newUser.email, name: newUser.name };
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isValid) {
-          throw new Error("Contraseña incorrecta.");
-        }
+        if (!isValid) throw new Error("Contraseña incorrecta.");
 
         return { id: user.id, email: user.email, name: user.name };
       }
     })
   ],
   callbacks: {
-    session({ session, token }) {
+    async session({ session, token }) {
       if (session.user && token.sub) {
-        // Le agregamos "as any" para que TypeScript no se queje del .id
+        // Forzamos el ID para que TypeScript no se queje
         (session.user as any).id = token.sub;
       }
       return session;
     },
   },
-  pages: {
-    signIn: '/',
-  }
+  pages: { signIn: '/' }
 };
 
 const handler = NextAuth(authOptions);
