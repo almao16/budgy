@@ -10,17 +10,20 @@ export default function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [perfil, setPerfil] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Busca esta parte en tu Navbar.tsx y cámbiala:
-useEffect(() => {
-  if (session) {
-    // CAMBIAR: de '/api/perfil' a '/api/profile'
-    fetch('/api/profile') 
-      .then(res => res.json())
-      .then(data => setPerfil(data))
-      .catch(err => console.error("Error cargando perfil:", err));
-  }
-}, [session]);
+  useEffect(() => {
+    setIsMounted(true);
+    if (session) {
+      fetch('/api/profile')
+        .then(res => {
+            if(!res.ok) throw new Error("No encontrado");
+            return res.json();
+        })
+        .then(data => setPerfil(data))
+        .catch(err => console.log("Perfil no listo aún"));
+    }
+  }, [session]);
 
   if (!session) return null;
 
@@ -28,44 +31,39 @@ useEffect(() => {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
   });
 
-  // ¡Adiós Registro! Y rutas en inglés:
-  const links = [
-    { name: "Dashboard", href: "/", icon: <LayoutDashboard size={18} /> },
-    { name: "Presupuestos", href: "/budgets", icon: <CalendarDays size={18} /> },
-    { name: "Plantillas", href: "/templates", icon: <LayoutTemplate size={18} /> },
-  ];
-
   return (
     <nav className="bg-slate-900 text-white shadow-md">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           
           <div className="flex items-center gap-6">
-            <h1 className="text-2xl font-black tracking-tight text-indigo-400">📊 Budgy</h1>
-            <span className="hidden md:block text-xs text-slate-400 capitalize">{fechaActual}</span>
+            {/* AQUÍ ESTÁ EL CAMBIO: El logo ahora es un Link clickeable */}
+            <Link href="/" className="transition-transform hover:scale-105 active:scale-95" title="Ir al Dashboard">
+              <h1 className="text-2xl font-black tracking-tight text-indigo-400">📊 Budgy</h1>
+            </Link>
+            {isMounted && <span className="hidden md:block text-xs text-slate-400 capitalize">{fechaActual}</span>}
           </div>
 
           <div className="hidden md:flex gap-1">
-            {links.map((link) => (
-              <Link key={link.name} href={link.href} 
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  pathname === link.href ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"
-                }`}>
-                {link.icon}
-                {link.name}
-              </Link>
-            ))}
+            <Link href="/" className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${pathname === "/" ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"}`}>
+              <LayoutDashboard size={18} /> Dashboard
+            </Link>
+            <Link href="/budgets" className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${pathname === "/budgets" ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"}`}>
+              <CalendarDays size={18} /> Presupuestos
+            </Link>
+            <Link href="/templates" className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${pathname === "/templates" ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"}`}>
+              <LayoutTemplate size={18} /> Plantillas
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Ruta actualizada a /profile */}
             <Link href="/profile" className="flex items-center gap-3 cursor-pointer hover:bg-slate-800 p-2 rounded-xl transition" title="Editar Perfil">
               <div className="w-9 h-9 bg-slate-200 rounded-full overflow-hidden border-2 border-indigo-500 flex items-center justify-center">
-                {perfil ? (
-                    <img src={perfil.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                    <span className="text-slate-500 text-xs font-bold">...</span>
-                )}
+                <img 
+                  src={perfil?.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${perfil?.nombre || session.user?.name || 'BudgyUser'}`} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover" 
+                />
               </div>
               <div className="hidden md:block text-sm">
                 <p className="font-bold leading-tight">{perfil?.nombre || session.user?.name}</p>

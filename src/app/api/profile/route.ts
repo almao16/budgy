@@ -13,7 +13,9 @@ export async function GET() {
     
     return NextResponse.json(perfil || { 
         nombre: user.name, 
-        avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=${user.name}` 
+        avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=${user.name}`,
+        frecuencia: "mensual",
+        diaPago: "1"
     });
 }
 
