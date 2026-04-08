@@ -1,7 +1,6 @@
 {
-  "name": "Budgy - Finanzas Personales",
+  "name": "Budgy",
   "short_name": "Budgy",
-  "description": "Tu bóveda de ahorros y presupuesto mensual",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -10,21 +9,12 @@
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ]
-
 }
