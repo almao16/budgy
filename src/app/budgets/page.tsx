@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-
 export default function BudgetsPage() {
   const { data: session, status } = useSession();
   const [store, setStore] = useState<any>({ meses: {} });
@@ -64,19 +63,18 @@ export default function BudgetsPage() {
                             <div className="p-5 space-y-4">
                                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                                     <span className="text-sm font-bold text-slate-400">Ingresos:</span>
-                                    <span className="text-emerald-600 font-bold">${sumIn.toFixed(2)}</span>
+                                    <span className="text-emerald-600 font-bold">${sumIn.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                                     <span className="text-sm font-bold text-slate-400">Gastado:</span>
-                                    <span className="text-slate-600 font-bold">${egresos.toFixed(2)}</span>
+                                    <span className="text-slate-600 font-bold">${egresos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                                     <span className="text-sm font-bold text-slate-400">Por pagar:</span>
-                                    <span className="text-amber-500 font-bold">${pendientes.toFixed(2)}</span>
+                                    <span className="text-amber-500 font-bold">${pendientes.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 
-                                {/* Ruta actualizada a /records?month= */}
-                                <Link href={`/records?month=${mes}`}>
+                                <Link href={`/transactions?month=${mes}`}>
                                     <button className="w-full mt-4 bg-indigo-50 text-indigo-600 py-2 rounded-lg font-bold text-sm hover:bg-indigo-600 hover:text-white transition border border-indigo-200 hover:border-indigo-600">
                                         ✏️ Ver y Editar Mes
                                     </button>
