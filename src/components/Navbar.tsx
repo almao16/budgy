@@ -39,7 +39,7 @@ export default function Navbar() {
           <div className="flex items-center gap-6">
             {/* AQUÍ ESTÁ EL CAMBIO: El logo ahora es un Link clickeable */}
             <Link href="/" className="transition-transform hover:scale-105 active:scale-95" title="Ir al Dashboard">
-              <h1 className="text-2xl font-black tracking-tight text-indigo-400">📊 Budgy</h1>
+              <h1 className="text-2xl font-black tracking-tight text-indigo-400"> Budgy</h1>
             </Link>
             {isMounted && <span className="hidden md:block text-xs text-slate-400 capitalize">{fechaActual}</span>}
           </div>

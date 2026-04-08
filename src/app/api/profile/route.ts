@@ -1,7 +1,7 @@
 import { kv } from '@vercel/kv';
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from 'next/server';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '../auth/[...nextauth]/authOptions'; // <--- IMPORTANTE: APUNTA AL NUEVO ARCHIVO
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -9,7 +9,7 @@ export async function GET() {
 
     if (!user?.id) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     
-    const perfil = await kv.get(`budgy:user:${user.id}:perfil`);
+    const perfil: any = await kv.get(`budgy:user:${user.id}:perfil`);
     
     return NextResponse.json(perfil || { 
         nombre: user.name, 
@@ -28,7 +28,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     await kv.set(`budgy:user:${user.id}:perfil`, body);
     
-    // Actualizar nombre en auth
     const userKey = `budgy:user:auth:${user.email}`;
     const authUser: any = await kv.get(userKey);
     if(authUser) {
