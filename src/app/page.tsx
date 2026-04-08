@@ -92,7 +92,7 @@ export default function Dashboard() {
     name: key.toUpperCase(),
     value: gastosPorCategoria[key],
     color: CATEGORY_COLORS[key] || '#cbd5e1'
-  })).sort((a, b) => b.value - a.value);
+  })).sort((a: any, b: any) => b.value - a.value);
 
   const saldoFinal = totales.ingresos - totales.egresos;
   const saldoReal = saldoFinal - totales.pendientes;
@@ -125,7 +125,6 @@ export default function Dashboard() {
 
   const mesesDisponibles = Object.keys(store.meses).sort().reverse();
 
-  // Función para obtener el rango de una semana específica (i = 1, 2, 3, 4)
   const getRangoSemanal = (numSemana: number) => {
     const inicio = new Date(fechaInicioCiclo.getTime() + (numSemana - 1) * 7 * 24 * 60 * 60 * 1000);
     const fin = new Date(inicio.getTime() + 6 * 24 * 60 * 60 * 1000);
@@ -150,49 +149,38 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
           <div className="bg-indigo-600 p-4 rounded-2xl shadow-md text-white flex flex-col justify-center border-b-4 border-indigo-800">
             <div className="flex items-center gap-2 mb-1"><Wallet size={14} className="text-indigo-200" /><span className="text-[10px] font-black uppercase tracking-widest opacity-90">Bóveda Ahorros</span></div>
-            <span className="text-xl md:text-2xl font-black">${totalAhorrosGlobal.toLocaleString('es-MX')}</span>
+            <span className="text-xl md:text-2xl font-black">${totalAhorrosGlobal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="bg-blue-600 p-4 rounded-2xl shadow-md text-white flex flex-col justify-center border-b-4 border-blue-800">
             <span className="text-[10px] font-black uppercase tracking-widest opacity-90 mb-1 leading-tight">{esMesActivo ? `Semanal Libre (x${semanasRestantes})` : 'Disponible'}</span>
-            <span className="text-xl md:text-2xl font-black">${gastoSemanal.toLocaleString('es-MX')}</span>
+            <span className="text-xl md:text-2xl font-black">${gastoSemanal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-t-4 border-t-emerald-500 flex flex-col justify-center text-center">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Ingresos</span>
-            <span className="text-xl font-black text-emerald-600">${totales.ingresos.toLocaleString('es-MX')}</span>
+            <span className="text-xl font-black text-emerald-600">${totales.ingresos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-t-4 border-t-rose-500 flex flex-col justify-center text-center">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Gastado</span>
-            <span className="text-xl font-black text-rose-500">${totales.egresos.toLocaleString('es-MX')}</span>
+            <span className="text-xl font-black text-rose-500">${totales.egresos.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 border-t-4 border-t-amber-400 flex flex-col justify-center text-center">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Pendiente</span>
-            <span className="text-xl font-black text-amber-500">${totales.pendientes.toLocaleString('es-MX')}</span>
+            <span className="text-xl font-black text-amber-500">${totales.pendientes.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
           </div>
           <div className="bg-slate-900 p-4 rounded-2xl shadow-md flex flex-col justify-center text-white text-center border-b-4 border-slate-700">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Saldo en Cuenta</span>
-            <span className="text-xl font-black text-white">${saldoFinal.toLocaleString('es-MX')}</span>
+            <span className="text-xl font-black text-white">${saldoFinal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
           </div>
         </div>
 
-        {/* CICLO MENSUAL CON FECHAS POR SEMANA */}
         {esMesActivo && (
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h3 className="font-black text-slate-800 uppercase text-[10px] mb-4 tracking-widest">
-              Control de Ciclo: Semana {semanaActual} de {limiteSemanas}
-            </h3>
-            
+            <h3 className="font-black text-slate-800 uppercase text-[10px] mb-4 tracking-widest">Control de Ciclo: Semana {semanaActual} de {limiteSemanas}</h3>
             <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${limiteSemanas}, minmax(0, 1fr))` }}>
               {Array.from({ length: limiteSemanas }, (_, i) => i + 1).map((sem) => (
                 <div key={sem} className="space-y-2">
-                  <div className={`h-3 rounded-full transition-all duration-500 ${
-                    sem < semanaActual ? 'bg-emerald-400' : 
-                    sem === semanaActual ? 'bg-blue-600 shadow-sm animate-pulse' : 'bg-slate-100'
-                  }`} />
-                  <p className={`text-[9px] font-bold text-center uppercase tracking-tighter ${
-                    sem === semanaActual ? 'text-blue-600' : 'text-slate-400'
-                  }`}>
-                    {getRangoSemanal(sem)}
-                  </p>
+                  <div className={`h-3 rounded-full transition-all duration-500 ${sem < semanaActual ? 'bg-emerald-400' : sem === semanaActual ? 'bg-blue-600 shadow-sm animate-pulse' : 'bg-slate-100'}`} />
+                  <p className={`text-[9px] font-bold text-center uppercase tracking-tighter ${sem === semanaActual ? 'text-blue-600' : 'text-slate-400'}`}>{getRangoSemanal(sem)}</p>
                 </div>
               ))}
             </div>
@@ -204,7 +192,17 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 mb-6"><PieIcon size={18} className="text-indigo-500" /><h3 className="font-black text-slate-800 uppercase text-sm">Distribución de Gastos</h3></div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart><Pie data={dataPie} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">{dataPie.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />))}</Pie><Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} formatter={(value: number) => `$${value.toLocaleString()}`}/><Legend verticalAlign="bottom" height={36}/></PieChart>
+                <PieChart>
+                  <Pie data={dataPie} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                    {dataPie.map((entry: any, index: number) => (<Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />))}
+                  </Pie>
+                  {/* CORRECCIÓN DE ERROR DE VERCEL AQUÍ */}
+                  <Tooltip 
+                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} 
+                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Monto']}
+                  />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -212,7 +210,19 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 mb-6"><Target size={18} className="text-emerald-500" /><h3 className="font-black text-slate-800 uppercase text-sm">Comparativa de Flujo</h3></div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dataBar} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" /><XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 'bold'}} /><YAxis hide /><Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} /><Bar dataKey="monto" radius={[8, 8, 8, 8]} barSize={50}>{dataBar.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}</Bar></BarChart>
+                <BarChart data={dataBar} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 'bold'}} />
+                  <YAxis hide />
+                  <Tooltip 
+                    cursor={{fill: '#f8fafc'}} 
+                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}} 
+                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Total']}
+                  />
+                  <Bar dataKey="monto" radius={[8, 8, 8, 8]} barSize={50}>
+                    {dataBar.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -231,7 +241,7 @@ export default function Dashboard() {
                     <div className="min-w-0 flex-1"><p className="text-xs font-black text-slate-700 truncate max-w-[140px] leading-tight">{mov.desc}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">{mov.tipo.replace('_', ' ')}</p></div>
                   </div>
                   <span className={`text-xs font-black whitespace-nowrap ${esIngreso ? 'text-emerald-600' : 'text-slate-700'}`}>
-                    {esIngreso ? '+' : '-'}${mov.monto.toLocaleString('es-MX')}
+                    {esIngreso ? '+' : '-'}${mov.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               )})}
