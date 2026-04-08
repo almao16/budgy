@@ -1,7 +1,12 @@
-import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
 
-const nextConfig: NextConfig = {
-  /* Aquí puedes agregar otras opciones en el futuro si las necesitas */
+const withPWA = withPWAInit({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development", // No molesta mientras programas
+});
+
+const nextConfig = {
+  // Aquí NO pongas 'output: export' para que tus APIs sigan funcionando en Vercel
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
